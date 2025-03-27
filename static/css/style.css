@@ -1,0 +1,312 @@
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    
+    --body-bg: #f8f9fa;
+    --body-color: #343a40;
+    --card-bg: #ffffff;
+    --card-border: #dee2e6;
+    
+    /* Task urgency colors */
+    --urgent-color: #dc3545;
+    --soon-color: #ffc107;
+    --normal-color: #28a745;
+    --overdue-color: #6f42c1;
+    
+    /* Transition speed */
+    --transition-speed: 0.3s;
+}
+
+/* Dark mode variables */
+[data-theme="dark"] {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --light-color: #343a40;
+    --dark-color: #f8f9fa;
+    
+    --body-bg: #212529;
+    --body-color: #f8f9fa;
+    --card-bg: #2c3034;
+    --card-border: #495057;
+    
+    /* Task urgency colors in dark mode */
+    --urgent-color: #e35d6a;
+    --soon-color: #ffda6a;
+    --normal-color: #5cb85c;
+    --overdue-color: #a370f7;
+}
+
+/* Base styles */
+body {
+    background-color: var(--body-bg);
+    color: var(--body-color);
+    transition: background-color var(--transition-speed), color var(--transition-speed);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: var(--card-bg);
+    transition: background-color var(--transition-speed);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.content-container {
+    flex-grow: 1;
+    padding: 2rem 0;
+}
+
+/* Card styles */
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    transition: background-color var(--transition-speed), border var(--transition-speed), transform 0.2s;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    font-weight: 600;
+    border-bottom: 1px solid var(--card-border);
+}
+
+/* Task card styles */
+.task-card {
+    position: relative;
+    border-left: 4px solid transparent;
+}
+
+.task-card.urgent {
+    border-left-color: var(--urgent-color);
+}
+
+.task-card.soon {
+    border-left-color: var(--soon-color);
+}
+
+.task-card.normal {
+    border-left-color: var(--normal-color);
+}
+
+.task-card.overdue {
+    border-left-color: var(--overdue-color);
+}
+
+.task-card.completed {
+    opacity: 0.7;
+}
+
+.task-deadline {
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+}
+
+.task-time-remaining {
+    font-weight: 600;
+}
+
+.task-time-remaining.urgent {
+    color: var(--urgent-color);
+}
+
+.task-time-remaining.soon {
+    color: var(--soon-color);
+}
+
+.task-time-remaining.normal {
+    color: var(--normal-color);
+}
+
+.task-time-remaining.overdue {
+    color: var(--overdue-color);
+}
+
+/* Form styles */
+.form-control {
+    background-color: var(--card-bg);
+    color: var(--body-color);
+    border-color: var(--card-border);
+}
+
+.form-control:focus {
+    background-color: var(--card-bg);
+    color: var(--body-color);
+}
+
+/* Button styles */
+.btn {
+    border-radius: 0.25rem;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Toggle switch for dark mode */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 30px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(30px);
+}
+
+/* Task filter buttons */
+.task-filter-btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.task-filter-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Task actions */
+.task-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Animation for new tasks */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.new-task {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Welcome page styling */
+.hero-section {
+    padding: 5rem 0;
+    text-align: center;
+}
+
+.hero-title {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+.feature-card {
+    text-align: center;
+    padding: 2rem;
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--body-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .task-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+}

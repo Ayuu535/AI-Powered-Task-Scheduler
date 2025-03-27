@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block title %}My Tasks - TaskMaster{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Task Creation Form -->
+        <div class="col-lg-4 mb-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h4 class="mb-0">Add New Task</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('tasks') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title</label>
+                            {{ form.title(class="form-control", id="title", placeholder="Task title") }}
+                            {% if form.title.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.title.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description (optional)</label>
+                            {{ form.description(class="form-control", id="description", rows="3", placeholder="Task description") }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="deadline" class="form-label">Deadline</label>
+                            {{ form.deadline(class="form-control", id="deadline", type="datetime-local") }}
+                            {% if form.deadline.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.deadline.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small><i class="bi bi-info-circle me-1"></i> Tasks are prioritized by deadline</small>
+                        <span class="badge bg-primary" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tasks are sorted using the Earliest Deadline First (EDF) algorithm">EDF</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Task Legend -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Priority Legend</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="me-2" style="width: 20px; height: 20px; background-color: var(--urgent-color); border-radius: 3px;"></div>
+                        <span>Urgent - Due within 24 hours</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="me-2" style="width: 20px; height: 20px; background-color: var(--soon-color); border-radius: 3px;"></div>
+                        <span>Soon - Due within 3 days</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="me-2" style="width: 20px; height: 20px; background-color: var(--normal-color); border-radius: 3px;"></div>
+                        <span>Normal - Due in more than 3 days</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="me-2" style="width: 20px; height: 20px; background-color: var(--overdue-color); border-radius: 3px;"></div>
+                        <span>Overdue - Past deadline</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Task List -->
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">My Tasks</h2>
+                
+                <!-- Filter buttons -->
+                <div class="task-filters">
+                    <button class="btn btn-outline-primary btn-sm task-filter-btn active" data-filter="all">
+                        <i class="bi bi-list"></i> All
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm task-filter-btn" data-filter="incomplete">
+                        <i class="bi bi-square"></i> Incomplete
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm task-filter-btn" data-filter="completed">
+                        <i class="bi bi-check-square"></i> Completed
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm task-filter-btn" data-filter="upcoming">
+                        <i class="bi bi-calendar-event"></i> Upcoming
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm task-filter-btn" data-filter="overdue">
+                        <i class="bi bi-exclamation-circle"></i> Overdue
+                    </button>
+                </div>
+            </div>
+            
+            <div id="task-container">
+                {% if incomplete_tasks %}
+                <h4 class="mb-3"><i class="bi bi-hourglass-split me-2"></i>Pending Tasks</h4>
+                
+                {% for task in incomplete_tasks %}
+                <div class="card task-card {{ task.urgency_class }} mb-3 new-task">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ task.title }}</h5>
+                        <p class="card-text">{{ task.description or "No description" }}</p>
+                        <div class="task-meta d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="task-deadline mb-0">
+                                    <i class="bi bi-calendar-event"></i> 
+                                    Due: {{ task.deadline.strftime('%Y-%m-%d %H:%M') }}
+                                </p>
+                                <p class="task-time-remaining mb-0 {{ task.urgency_class }}">
+                                    <i class="bi bi-alarm"></i> 
+                                    {{ task.time_remaining }}
+                                </p>
+                            </div>
+                            <div class="task-actions">
+                                <form action="{{ url_for('complete_task', task_id=task.id) }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="bi bi-check-circle"></i> Complete
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('delete_task', task_id=task.id) }}" method="post" class="d-inline delete-task-form">
+                                    <button type="button" class="btn btn-danger btn-sm delete-task-btn">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i>
+                    You don't have any pending tasks. Add a new task to get started!
+                </div>
+                {% endif %}
+                
+                {% if completed_tasks %}
+                <h4 class="mb-3 mt-4"><i class="bi bi-check2-all me-2"></i>Completed Tasks</h4>
+                
+                {% for task in completed_tasks %}
+                <div class="card task-card completed mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ task.title }}</h5>
+                        <p class="card-text">{{ task.description or "No description" }}</p>
+                        <div class="task-meta d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="task-deadline mb-0">
+                                    <i class="bi bi-calendar-event"></i> 
+                                    Due: {{ task.deadline.strftime('%Y-%m-%d %H:%M') }}
+                                </p>
+                                <p class="task-time-remaining mb-0">
+                                    <i class="bi bi-check-circle-fill text-success"></i> 
+                                    Completed
+                                </p>
+                            </div>
+                            <div class="task-actions">
+                                <form action="{{ url_for('complete_task', task_id=task.id) }}" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-x-circle"></i> Mark Incomplete
+                                    </button>
+                                </form>
+                                <form action="{{ url_for('delete_task', task_id=task.id) }}" method="post" class="d-inline delete-task-form">
+                                    <button type="button" class="btn btn-danger btn-sm delete-task-btn">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                {% endif %}
+                
+                {% if not incomplete_tasks and not completed_tasks %}
+                <div class="text-center py-5 my-5">
+                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/task-management-3896536-3243894.png" alt="No tasks" class="img-fluid mb-4" style="max-width: 250px;">
+                    <h3>You don't have any tasks yet!</h3>
+                    <p class="text-muted">Add your first task using the form on the left.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set current date and time as minimum for deadline input
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+        
+        const deadlineInput = document.getElementById('deadline');
+        if (deadlineInput) {
+            deadlineInput.setAttribute('min', minDateTime);
+            // Set default to current time + 1 day
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tYear = tomorrow.getFullYear();
+            const tMonth = String(tomorrow.getMonth() + 1).padStart(2, '0');
+            const tDay = String(tomorrow.getDate()).padStart(2, '0');
+            const defaultDateTime = `${tYear}-${tMonth}-${tDay}T${hours}:${minutes}`;
+            deadlineInput.value = defaultDateTime;
+        }
+    });
+</script>
+{% endblock %}
