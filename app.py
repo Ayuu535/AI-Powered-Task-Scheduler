@@ -19,7 +19,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 # Import after app is created to avoid circular imports
-from models import User, Task, users, tasks
+from models import User, Task, users, tasks as tasks_dict
 from forms import LoginForm, RegisterForm, TaskForm, ProfileForm
 from utils import sort_tasks_by_edf
 
@@ -104,16 +104,16 @@ def tasks():
         deadline = datetime.strptime(deadline_str, '%Y-%m-%dT%H:%M')
         
         # Create new task
-        task_id = len(tasks) + 1
+        task_id = len(tasks_dict) + 1
         task = Task(id=task_id, user_id=current_user.id, title=title, 
                     description=description, deadline=deadline)
-        tasks[task_id] = task
+        tasks_dict[task_id] = task
         
         flash('Task added successfully!', 'success')
         return redirect(url_for('tasks'))
     
     # Get all tasks for current user
-    user_tasks = [task for task in tasks.values() if task.user_id == current_user.id]
+    user_tasks = [task for task in tasks_dict.values() if task.user_id == current_user.id]
     
     # Sort tasks using EDF algorithm
     sorted_tasks = sort_tasks_by_edf(user_tasks)
@@ -129,7 +129,7 @@ def tasks():
 @app.route('/tasks/<int:task_id>/complete', methods=['POST'])
 @login_required
 def complete_task(task_id):
-    task = tasks.get(task_id)
+    task = tasks_dict.get(task_id)
     
     if not task:
         flash('Task not found', 'danger')
@@ -151,7 +151,7 @@ def complete_task(task_id):
 @app.route('/tasks/<int:task_id>/delete', methods=['POST'])
 @login_required
 def delete_task(task_id):
-    task = tasks.get(task_id)
+    task = tasks_dict.get(task_id)
     
     if not task:
         flash('Task not found', 'danger')
@@ -161,7 +161,7 @@ def delete_task(task_id):
         flash('Unauthorized access', 'danger')
         return redirect(url_for('tasks'))
     
-    del tasks[task_id]
+    del tasks_dict[task_id]
     
     flash('Task deleted successfully!', 'success')
     return redirect(url_for('tasks'))
@@ -202,7 +202,7 @@ def profile():
         return redirect(url_for('profile'))
     
     # Count user's tasks
-    user_tasks = [task for task in tasks.values() if task.user_id == current_user.id]
+    user_tasks = [task for task in tasks_dict.values() if task.user_id == current_user.id]
     total_tasks = len(user_tasks)
     completed_tasks = len([task for task in user_tasks if task.completed])
     
@@ -216,7 +216,7 @@ def filter_tasks():
     filter_type = request.args.get('type', 'all')
     
     # Get all tasks for current user
-    user_tasks = [task for task in tasks.values() if task.user_id == current_user.id]
+    user_tasks = [task for task in tasks_dict.values() if task.user_id == current_user.id]
     
     if filter_type == 'completed':
         filtered_tasks = [task for task in user_tasks if task.completed]
