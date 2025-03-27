@@ -4,6 +4,7 @@ from datetime import datetime
 from flask import Flask, render_template, redirect, url_for, flash, request, jsonify, session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_sqlalchemy import SQLAlchemy
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -13,19 +14,32 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 
+# Configure database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Initialize SQLAlchemy
+db = SQLAlchemy(app)
+
+# Import after db is created but before login manager setup
+from models import User, Task
+
 # Configure login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# Import after app is created to avoid circular imports
-from models import User, Task, users, tasks as tasks_dict
+# Import after app and models are available
 from forms import LoginForm, RegisterForm, TaskForm, ProfileForm
 from utils import sort_tasks_by_edf
 
+# Create tables
+with app.app_context():
+    db.create_all()
+
 @login_manager.user_loader
 def load_user(user_id):
-    return users.get(int(user_id))
+    return User.query.get(int(user_id))
 
 @app.route('/')
 def index():
@@ -41,11 +55,7 @@ def login():
         password = form.password.data
         
         # Find user by username
-        user = None
-        for u in users.values():
-            if u.username == username:
-                user = u
-                break
+        user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
@@ -65,19 +75,21 @@ def register():
         password = form.password.data
         
         # Check if username already exists
-        for u in users.values():
-            if u.username == username:
-                flash('Username already exists. Please choose another one.', 'danger')
-                return render_template('register.html', form=form)
-            if u.email == email:
-                flash('Email already registered. Please use another one.', 'danger')
-                return render_template('register.html', form=form)
+        if User.query.filter_by(username=username).first():
+            flash('Username already exists. Please choose another one.', 'danger')
+            return render_template('register.html', form=form)
+        
+        if User.query.filter_by(email=email).first():
+            flash('Email already registered. Please use another one.', 'danger')
+            return render_template('register.html', form=form)
         
         # Create new user
-        user_id = len(users) + 1
-        user = User(id=user_id, username=username, email=email)
+        user = User(username=username, email=email)
         user.password_hash = generate_password_hash(password)
-        users[user_id] = user
+        
+        # Add to database
+        db.session.add(user)
+        db.session.commit()
         
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('login'))
@@ -104,16 +116,18 @@ def tasks():
         deadline = datetime.strptime(deadline_str, '%Y-%m-%dT%H:%M')
         
         # Create new task
-        task_id = len(tasks_dict) + 1
-        task = Task(id=task_id, user_id=current_user.id, title=title, 
+        task = Task(user_id=current_user.id, title=title, 
                     description=description, deadline=deadline)
-        tasks_dict[task_id] = task
+        
+        # Add to database
+        db.session.add(task)
+        db.session.commit()
         
         flash('Task added successfully!', 'success')
         return redirect(url_for('tasks'))
     
     # Get all tasks for current user
-    user_tasks = [task for task in tasks_dict.values() if task.user_id == current_user.id]
+    user_tasks = Task.query.filter_by(user_id=current_user.id).all()
     
     # Sort tasks using EDF algorithm
     sorted_tasks = sort_tasks_by_edf(user_tasks)
@@ -129,7 +143,7 @@ def tasks():
 @app.route('/tasks/<int:task_id>/complete', methods=['POST'])
 @login_required
 def complete_task(task_id):
-    task = tasks_dict.get(task_id)
+    task = Task.query.get(task_id)
     
     if not task:
         flash('Task not found', 'danger')
@@ -140,6 +154,7 @@ def complete_task(task_id):
         return redirect(url_for('tasks'))
     
     task.completed = not task.completed
+    db.session.commit()
     
     if task.completed:
         flash('Task marked as completed!', 'success')
@@ -151,7 +166,7 @@ def complete_task(task_id):
 @app.route('/tasks/<int:task_id>/delete', methods=['POST'])
 @login_required
 def delete_task(task_id):
-    task = tasks_dict.get(task_id)
+    task = Task.query.get(task_id)
     
     if not task:
         flash('Task not found', 'danger')
@@ -161,7 +176,8 @@ def delete_task(task_id):
         flash('Unauthorized access', 'danger')
         return redirect(url_for('tasks'))
     
-    del tasks_dict[task_id]
+    db.session.delete(task)
+    db.session.commit()
     
     flash('Task deleted successfully!', 'success')
     return redirect(url_for('tasks'))
@@ -176,33 +192,36 @@ def profile():
         form.email.data = current_user.email
     
     if form.validate_on_submit():
-        user = users[current_user.id]
+        user = User.query.get(current_user.id)
         
         # Check if username is changed and if it exists
         if form.username.data != user.username:
-            for u in users.values():
-                if u.id != user.id and u.username == form.username.data:
-                    flash('Username already exists. Please choose another one.', 'danger')
-                    return render_template('profile.html', form=form)
+            existing_user = User.query.filter_by(username=form.username.data).first()
+            if existing_user and existing_user.id != user.id:
+                flash('Username already exists. Please choose another one.', 'danger')
+                return render_template('profile.html', form=form)
             user.username = form.username.data
         
         # Check if email is changed and if it exists
         if form.email.data != user.email:
-            for u in users.values():
-                if u.id != user.id and u.email == form.email.data:
-                    flash('Email already registered. Please use another one.', 'danger')
-                    return render_template('profile.html', form=form)
+            existing_user = User.query.filter_by(email=form.email.data).first()
+            if existing_user and existing_user.id != user.id:
+                flash('Email already registered. Please use another one.', 'danger')
+                return render_template('profile.html', form=form)
             user.email = form.email.data
         
         # Update password if provided
         if form.password.data:
             user.password_hash = generate_password_hash(form.password.data)
         
+        # Save changes to database
+        db.session.commit()
+        
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('profile'))
     
     # Count user's tasks
-    user_tasks = [task for task in tasks_dict.values() if task.user_id == current_user.id]
+    user_tasks = Task.query.filter_by(user_id=current_user.id).all()
     total_tasks = len(user_tasks)
     completed_tasks = len([task for task in user_tasks if task.completed])
     
@@ -215,23 +234,21 @@ def profile():
 def filter_tasks():
     filter_type = request.args.get('type', 'all')
     
-    # Get all tasks for current user
-    user_tasks = [task for task in tasks_dict.values() if task.user_id == current_user.id]
+    # Base query for current user's tasks
+    query = Task.query.filter_by(user_id=current_user.id)
     
     if filter_type == 'completed':
-        filtered_tasks = [task for task in user_tasks if task.completed]
+        filtered_tasks = query.filter_by(completed=True).all()
     elif filter_type == 'incomplete':
-        filtered_tasks = [task for task in user_tasks if not task.completed]
+        filtered_tasks = query.filter_by(completed=False).all()
     elif filter_type == 'upcoming':
         now = datetime.now()
-        filtered_tasks = [task for task in user_tasks 
-                        if not task.completed and task.deadline > now]
+        filtered_tasks = query.filter_by(completed=False).filter(Task.deadline > now).all()
     elif filter_type == 'overdue':
         now = datetime.now()
-        filtered_tasks = [task for task in user_tasks 
-                        if not task.completed and task.deadline < now]
+        filtered_tasks = query.filter_by(completed=False).filter(Task.deadline < now).all()
     else:  # 'all'
-        filtered_tasks = user_tasks
+        filtered_tasks = query.all()
     
     # Sort tasks using EDF algorithm
     sorted_tasks = sort_tasks_by_edf(filtered_tasks)
