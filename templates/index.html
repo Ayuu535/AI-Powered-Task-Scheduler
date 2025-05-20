@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}TaskMaster - Smart Task Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="hero-title">Manage Your Tasks Smarter, Not Harder</h1>
+                <p class="hero-subtitle">TaskMaster uses the Earliest Deadline First (EDF) algorithm to ensure you always work on the most time-critical tasks first.</p>
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 gap-3">Get Started</a>
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg px-4">Login</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon">
+                            <i class="bi bi-alarm"></i>
+                        </div>
+                        <h3>Earliest Deadline First</h3>
+                        <p>Our system uses the EDF algorithm to prioritize your tasks, ensuring you never miss important deadlines.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon">
+                            <i class="bi bi-moon-stars"></i>
+                        </div>
+                        <h3>Dark Mode Support</h3>
+                        <p>Work comfortably day or night with our eye-friendly dark mode that adapts to your preferences.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card feature-card h-100">
+                    <div class="card-body">
+                        <div class="feature-icon">
+                            <i class="bi bi-phone"></i>
+                        </div>
+                        <h3>Responsive Design</h3>
+                        <p>Access your tasks from any device - desktop, tablet, or mobile. TaskMaster adapts to your screen size.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- How It Works Section -->
+    <section class="py-5">
+        <div class="text-center mb-5">
+            <h2>How It Works</h2>
+            <p class="lead">TaskMaster makes task management simple and effective</p>
+        </div>
+        <div class="row">
+            <div class="col-md-3 text-center mb-4">
+                <div class="bg-primary text-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4">1</span>
+                </div>
+                <h4>Create Tasks</h4>
+                <p>Add your tasks with titles, descriptions, and most importantly - deadlines.</p>
+            </div>
+            <div class="col-md-3 text-center mb-4">
+                <div class="bg-primary text-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4">2</span>
+                </div>
+                <h4>Automatic Prioritization</h4>
+                <p>Our EDF algorithm automatically sorts your tasks by urgency.</p>
+            </div>
+            <div class="col-md-3 text-center mb-4">
+                <div class="bg-primary text-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4">3</span>
+                </div>
+                <h4>Focus on What Matters</h4>
+                <p>Work on the most time-critical tasks first, ensuring nothing important slips through.</p>
+            </div>
+            <div class="col-md-3 text-center mb-4">
+                <div class="bg-primary text-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                    <span class="fs-4">4</span>
+                </div>
+                <h4>Track Progress</h4>
+                <p>Mark tasks as complete and watch your productivity soar!</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Call to Action -->
+    <section class="py-5 text-center">
+        <div class="p-5 bg-light rounded-3">
+            <div class="container py-5">
+                <h2 class="display-5 fw-bold">Ready to optimize your productivity?</h2>
+                <p class="col-md-8 fs-4 mx-auto">Join thousands of users who have transformed their task management with TaskMaster.</p>
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 mt-3">
+                    Sign Up Now - It's Free!
+                </a>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

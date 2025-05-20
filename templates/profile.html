@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - TaskMaster{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Profile Information -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Profile Information</h4>
+                </div>
+                <div class="card-body text-center">
+                    <div class="avatar-circle mb-3 mx-auto">
+                        <span class="avatar-text display-3">{{ current_user.username[0]|upper }}</span>
+                    </div>
+                    <h3>{{ current_user.username }}</h3>
+                    <p class="text-muted">{{ current_user.email }}</p>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Total Tasks</span>
+                        <span class="badge bg-primary rounded-pill">{{ total_tasks }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Completed Tasks</span>
+                        <span class="badge bg-success rounded-pill">{{ completed_tasks }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Pending Tasks</span>
+                        <span class="badge bg-warning rounded-pill">{{ total_tasks - completed_tasks }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>Completion Rate</span>
+                        <span class="badge {% if total_tasks > 0 and completed_tasks/total_tasks >= 0.7 %}bg-success{% elif total_tasks > 0 and completed_tasks/total_tasks >= 0.4 %}bg-warning{% elif total_tasks > 0 %}bg-danger{% else %}bg-secondary{% endif %} rounded-pill">
+                            {{ (completed_tasks / total_tasks * 100)|round|int if total_tasks > 0 else 0 }}%
+                        </span>
+                    </li>
+                </ul>
+                <div class="card-footer text-center">
+                    <a href="{{ url_for('tasks') }}" class="btn btn-primary">
+                        <i class="bi bi-list-task me-1"></i>View Tasks
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Profile Update Form -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Update Profile</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('profile') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            {{ form.username(class="form-control", id="username") }}
+                            {% if form.username.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.username.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            {{ form.email(class="form-control", id="email") }}
+                            {% if form.email.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.email.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">New Password (leave blank to keep current)</label>
+                            {{ form.password(class="form-control", id="password") }}
+                            {% if form.password.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.password.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            {{ form.confirm_password(class="form-control", id="confirm_password") }}
+                            {% if form.confirm_password.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.confirm_password.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Additional User Settings -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Preferences</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-0">Dark Mode</h5>
+                            <p class="text-muted mb-0">Toggle between light and dark themes</p>
+                        </div>
+                        <div class="form-check form-switch">
+                            <label class="toggle-switch mb-0">
+                                <input type="checkbox" id="themeSwitchProfile">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Account Management -->
+            <div class="card mt-4">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Danger Zone</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5>Logout from all devices</h5>
+                            <p class="text-muted mb-0">This will log you out from all devices except this one</p>
+                        </div>
+                        <button class="btn btn-outline-danger" disabled>Coming Soon</button>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5>Delete Account</h5>
+                            <p class="text-muted mb-0">This action cannot be undone. All your data will be permanently deleted.</p>
+                        </div>
+                        <button class="btn btn-danger" disabled>Coming Soon</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-circle {
+        width: 100px;
+        height: 100px;
+        background-color: var(--primary-color);
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .avatar-text {
+        font-weight: bold;
+    }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sync profile page theme switch with the main one
+        const mainThemeToggle = document.getElementById('darkModeToggle');
+        const profileThemeToggle = document.getElementById('themeSwitchProfile');
+        
+        if (profileThemeToggle && mainThemeToggle) {
+            // Set initial state based on current theme
+            profileThemeToggle.checked = mainThemeToggle.checked;
+            
+            // Sync theme toggle changes
+            profileThemeToggle.addEventListener('change', function() {
+                mainThemeToggle.checked = this.checked;
+                mainThemeToggle.dispatchEvent(new Event('change'));
+            });
+        }
+    });
+</script>
+{% endblock %}
